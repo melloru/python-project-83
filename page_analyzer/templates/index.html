@@ -1,37 +1,23 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Анализатор страниц</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-</head>
-<body>
-  <header class="flex-shrink-0"> <!--Элемент не должен сжиматься(уменьшатся в размере)-->
-      <nav class="navbar navbar-expand-md bg-dark px-3" data-bs-theme="dark"> <!--Навигационная панель. Будет отображаться в гориз.виде от 768px. px гориз. внут отступы. Темная тема(так же меняет цвет текста)-->
-    <a class="navbar-brand" href="/">Анализатор страниц</a>
-    <div id="navbarNav">
-        <ul class="navbar-nav">
-          <li class="nav-item"><a class="nav-link" href="#">Сайты</a></li> <!--Элемент нав.панели. Стилизует ссылку-->
-        </ul>
-    </div>
-  </nav>
-  </header>
-  <main class="flex-grow-1"> <!--Элемент может занимать свободное пространство внутри flex-контейнера-->
+{% extends "header.html" %}
+
+
+{% block content %}
+
+<main class="flex-grow-1"> <!--Элемент может занимать свободное пространство внутри flex-контейнера-->
     <div class="container-lg mt-3"> <!--Фиксированный контейнер, который будет иметь максимальную ширину на больших экранах (размеры от 992 пикселей и выше). На меньших экранах (таких, как мобильные устройства) контейнер будет занимать 100% ширины экрана. margin-top отступ сверху-->
       <h1></h1>
       <div class="row">
         <div class="col-12 col-md-10 col-lg-8 mx-auto border rounded-3 bg-light p-5"> <!--Автоматические отступы по горизонтали (margin-left и margin-right), что центрирует элемент внутри родительского контейнера. Применяет радиус закругления к границам элемента, делая углы более мягкими.-->
           <h1 class="display-3">Анализатор страниц</h1>
           <p class="lead">Бесплатно проверяйте сайты на SEO-пригодность</p> <!---->
-          <form action="#" method="post" class="d-flex justify-content-center"> <!--Позволяет элементам выстраиваться в одну строку или столбец. Центрирует элементы внутри flex-контейнера по горизонтали.-->
+          <form action="/urls" method="post" class="d-flex justify-content-center"> <!--Позволяет элементам выстраиваться в одну строку или столбец. Центрирует элементы внутри flex-контейнера по горизонтали.-->
             <label for="text" class="visually-hidden">Url для проверки</label>
-            <input type="text" id="text" name="url" placeholder="https://www.example.com" value="" class="form-control form-control-lg" required=""> <!--Применяет стили Bootstrap для элементов управления формами. Изменяет размер поля ввода на большой.-->
+            <input type="text" id="text" name="name" placeholder="https://www.example.com" value="" class="form-control form-control-lg" required=""> <!--Применяет стили Bootstrap для элементов управления формами. Изменяет размер поля ввода на большой.-->
             <input type="submit" class="btn btn-primary  btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить"> <!--Применяет стандартные стили для кнопки Bootstrap. Применяет стили главной (primary) кнопки, обычно синего цвета. Задает большой размер кнопки. (margin-start)Устанавливает отступ слева.-->
           </form>
         </div>
       </div>
     </div>
-  </main>
-</body>
-</html>
+</main>
+
+{% endblock %}
