@@ -1,6 +1,7 @@
 from flask import (Flask, request,
                    render_template, redirect,
-                   flash, url_for, get_flashed_messages)
+                   flash, url_for, get_flashed_messages,
+                   )
 from page_analyzer.db import UrlRepository, get_db_connection
 from page_analyzer.validator import validate
 from dotenv import load_dotenv
@@ -50,14 +51,23 @@ def urls_index():
     return render_template('urls.html', urls=urls)
 
 
-@app.route('/urls/<int:id>')
+@app.route('/urls/<int:id>', methods=['GET', 'POST'])
 def urls_show(id):
     messages = get_flashed_messages(with_categories=True)
     found_url = repo.find_url(url_id=id)
     if not found_url:
         return render_template('page_not_found.html')
+    found_checks = repo.get_url_checks(id)
     return render_template('show.html',
                            messages=messages,
-                           url=found_url['name'],
-                           id=found_url['id'],
-                           created_at=found_url['created_at'])
+                           url=found_url,
+                           checks=found_checks)
+
+
+@app.post('/urls/<int:id>/checks')
+def start_url_check(id):
+    if not id:
+        return "URL data is missing", 400
+    print(id)
+    repo.url_check(id)
+    return redirect(url_for('urls_show', id=id))
