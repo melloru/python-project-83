@@ -24,14 +24,16 @@ class UrlRepository:
                          params=None):
         with self.conn.cursor(cursor_factory=DictCursor) as curs:
             curs.execute(query, params)
+
             if get_data is None:
+                self.commit()
                 return
             elif get_data not in ['one', 'all']:
                 raise ValueError("""
                 Parameter 'get' must be either
                 'one' or 'all'.
                 """)
-            self.commit()
+
             return curs.fetchone() if get_data == 'one' else curs.fetchall()
 
     def find_url(self, url_id=None, url_name=None):
@@ -55,22 +57,27 @@ class UrlRepository:
 
     def get_urls(self):
         query = """
-        SELECT u.id, u.name, uc.last_check
-        FROM urls AS u
-        LEFT JOIN
-        (SELECT url_id, MAX(created_at) AS last_check
-        FROM url_checks
-        GROUP BY url_id)
-        AS uc ON u.id = uc.url_id
-        ORDER BY u.id;"""
+    SELECT u.id, u.name, uc.last_check, st_code.status_code FROM urls AS u
+    LEFT JOIN (SELECT url_id, MAX(created_at) AS last_check FROM url_checks
+    GROUP BY url_id)
+    AS uc ON u.id = uc.url_id
+    LEFT JOIN url_checks AS st_code ON u.id = st_code.url_id
+    ORDER BY u.id DESC;"""
+
         return self.query_processing(query, 'all')
 
-    def url_check(self, id):
+    def url_check(self, url):
         query = """
-        INSERT INTO url_checks (url_id)
-        VALUES (%(id)s);
+        INSERT INTO url_checks (url_id, status_code, h1, title, description)
+        VALUES (%(id)s, %(status_code)s, %(h1)s, %(title)s, %(content)s);
         """
-        params = {'id': id}
+        params = {
+            'id': url['id'],
+            'status_code': url['status_code'],
+            'h1': url['h1'],
+            'title': url['title'],
+            'content': url['content']
+        }
         return self.query_processing(query, params=params)
 
     def get_url_checks(self, url_id):

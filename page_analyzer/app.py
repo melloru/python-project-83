@@ -5,6 +5,8 @@ from flask import (Flask, request,
 from page_analyzer.db import UrlRepository, get_db_connection
 from page_analyzer.validator import validate
 from dotenv import load_dotenv
+from bs4 import BeautifulSoup
+import requests
 import os
 
 
@@ -30,28 +32,28 @@ def index():
 def urls_index():
     if request.method == "POST":
         url_data = request.form.to_dict()
-        errors = validate(url_data)
+        parsed_url = validate(url_data['name'])
 
-        if errors:
-            flash(errors['name'], 'danger')
+        if parsed_url.get('error_name'):
+            flash(parsed_url['error_name'], 'danger')
             return redirect(url_for('index'))
 
-        found_url = repo.find_url(url_name=url_data['name'])
+        found_url = repo.find_url(url_name=parsed_url['name'])
 
         if found_url:
             flash('Страница уже существует', 'info')
             return redirect(url_for('urls_show', id=found_url['id']))
         else:
-            added_url = repo.add_url(url_data['name'])
-            repo.commit()
+            added_url = repo.add_url(parsed_url['name'])
             flash('Страница успешно добавлена', 'success')
             return redirect(url_for('urls_show', id=added_url['id']))
 
     urls = repo.get_urls()
+    print(urls)
     return render_template('urls.html', urls=urls)
 
 
-@app.route('/urls/<int:id>', methods=['GET', 'POST'])
+@app.get('/urls/<int:id>')
 def urls_show(id):
     messages = get_flashed_messages(with_categories=True)
     found_url = repo.find_url(url_id=id)
@@ -66,8 +68,28 @@ def urls_show(id):
 
 @app.post('/urls/<int:id>/checks')
 def start_url_check(id):
-    if not id:
-        return "URL data is missing", 400
-    print(id)
-    repo.url_check(id)
+    try:
+        url = request.form.get('url_name')
+        response = requests.get(url)
+        response.raise_for_status()
+    except Exception:
+        flash('Произошла ошибка при проверке', 'danger')
+        return redirect(url_for('urls_show', id=id))
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        h1 = soup.find('h1')
+        title = soup.find('title')
+        content = soup.find('meta', attrs={'name': 'description'})
+
+        result = {
+            'id': id,
+            'status_code': response.status_code,
+            'h1': h1.get_text() if h1 else None,
+            'title': title.get_text() if title else None,
+            'content': content['content']
+            if content and 'content' in content.attrs else None
+        }
+        repo.url_check(result)
+        flash('Страница успешно проверена', 'success')
     return redirect(url_for('urls_show', id=id))

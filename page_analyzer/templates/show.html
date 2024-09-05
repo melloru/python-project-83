@@ -5,7 +5,7 @@
 
 <main class="flex-grow-1">
     <div class="container-lg mt-3">
-      <h1>Сайт: https://translate.google.com</h1>
+      <h1>{{ url['name'] }}</h1>
 
 
   <div class="table-responsive">
@@ -29,6 +29,7 @@
 
     <h2 class="mt-5 mb-3">Проверки</h2>
     <form method="post" action="/urls/{{ url['id'] }}/checks">
+      <input type="hidden" name="url_name" value="{{ url['name'] }}">
       <input type="submit" class="btn btn-primary" value="Запустить проверку">
     </form>
 
@@ -48,11 +49,11 @@
         {% for check in checks %}
         <tr>
           <td>{{ check['id'] }}</td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td>{{ check['created_at'] }}</td>
+          <td>{% if check['status_code'] is none %} {% else %} {{ check['status_code'] }} {% endif %}</td>
+          <td>{% if check['h1'] is none %} {% else %} {{ check['h1'] }} {% endif %}</td>
+          <td>{% if check['title'] is none %} {% else %} {{ check['title'] }} {% endif %}</td>
+          <td>{% if check['description'] is none %} {% else %} {{ check['description'] }} {% endif %}</td>
+          <td>{% if check['created_at'] is none %} {% else %} {{ check['created_at'] }} {% endif %}</td>
         </tr>
       {% endfor %}
     </tbody>
