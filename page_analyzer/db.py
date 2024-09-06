@@ -26,13 +26,16 @@ class UrlRepository:
     def commit(self):
         self.conn.commit()
 
+    def close(self):
+        if self.conn:
+            self.conn.close()
+
     def query_processing(self, query, get_data: Literal['one', 'all'] = None,
                          params=None):
         with self.conn.cursor(cursor_factory=DictCursor) as curs:
             curs.execute(query, params)
-
+            self.commit()
             if get_data is None:
-                self.commit()
                 return
             elif get_data not in ['one', 'all']:
                 raise ValueError("""

@@ -2,10 +2,9 @@ from flask import (Flask, request,
                    render_template, redirect,
                    flash, url_for, get_flashed_messages,
                    )
-from page_analyzer.model import (add_url, find_url,
-                                 find_url_checks, add_url_check,
+from page_analyzer.model import (add_url, get_url,
+                                 get_url_checks, add_url_check,
                                  get_urls)
-from page_analyzer.db import UrlRepository
 from dotenv import load_dotenv
 import os
 
@@ -14,8 +13,6 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-
-repo = UrlRepository()
 
 
 @app.route('/')
@@ -41,16 +38,11 @@ def urls_post():
 
     url_data = request.form.to_dict()
     message, id = add_url(url_data)
-
     if message == 'danger':
         flash(*messages['danger'])
         return redirect(url_for('index'))
 
-    if message == 'info':
-        flash(*messages['info'])
-        redirect(url_for('urls_show', id=id))
-
-    flash(*messages['success'])
+    flash(*messages[message])
     return redirect(url_for('urls_show', id=id))
 
 
@@ -58,11 +50,11 @@ def urls_post():
 def urls_show(id):
     message = get_flashed_messages(with_categories=True)
 
-    url = find_url(id)
+    url = get_url(id)
     if url == 404:
         return render_template('page_not_found.html')
 
-    checks = find_url_checks(id)
+    checks = get_url_checks(id)
     return render_template('show.html',
                            messages=message,
                            url=url,
