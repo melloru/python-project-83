@@ -49,11 +49,11 @@
         {% for check in checks %}
         <tr>
           <td>{{ check['id'] }}</td>
-          <td>{% if check['status_code'] is none %} {% else %} {{ check['status_code'] }} {% endif %}</td>
-          <td>{% if check['h1'] is none %} {% else %} {{ check['h1'] }} {% endif %}</td>
-          <td>{% if check['title'] is none %} {% else %} {{ check['title'] }} {% endif %}</td>
-          <td>{% if check['description'] is none %} {% else %} {{ check['description'] }} {% endif %}</td>
-          <td>{% if check['created_at'] is none %} {% else %} {{ check['created_at'] }} {% endif %}</td>
+          <td>{{ check['status_code'] if check['status_code'] else '' }}</td>
+          <td>{{ check['h1'] if check['h1'] else '' }}</td>
+          <td>{{ check['title'] if check['title'] else '' }}</td>
+          <td>{{ check['description'] if check['description'] else '' }}</td>
+          <td>{{ check['created_at'] if check['created_at'] else '' }}</td>
         </tr>
       {% endfor %}
     </tbody>
