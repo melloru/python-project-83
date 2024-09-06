@@ -1,6 +1,6 @@
 from flask import (Flask, request,
                    render_template, redirect,
-                   flash, url_for, get_flashed_messages,
+                   flash, url_for, get_flashed_messages, session,
                    )
 from page_analyzer.model import (add_url, get_url,
                                  get_url_checks, add_url_check,
@@ -17,9 +17,11 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 @app.route('/')
 def index():
+    url = session.get('url', '')
     message = get_flashed_messages(with_categories=True)
     return render_template('index.html',
-                           messages=message)
+                           messages=message,
+                           url=url)
 
 
 @app.get('/urls')
@@ -37,17 +39,21 @@ def urls_post():
     }
 
     url_data = request.form.to_dict()
+
     message, id = add_url(url_data)
     if message == 'danger':
         flash(*messages['danger'])
+        session['url'] = url_data['name']
         return redirect(url_for('index'))
 
+    session.pop('url', None)
+
     flash(*messages[message])
-    return redirect(url_for('urls_show', id=id))
+    return redirect(url_for('url_show', id=id))
 
 
 @app.get('/urls/<int:id>')
-def urls_show(id):
+def url_show(id):
     message = get_flashed_messages(with_categories=True)
 
     url = get_url(id)
@@ -73,8 +79,8 @@ def url_check(id):
 
     if check == 'danger':
         flash(*messages['danger'])
-        return redirect(url_for('urls_show', id=id))
+        return redirect(url_for('url_show', id=id))
 
     if check == 'success':
         flash(*messages['success'])
-        return redirect(url_for('urls_show', id=id))
+        return redirect(url_for('url_show', id=id))
