@@ -17,11 +17,9 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 @app.route('/')
 def index():
-    url = session.get('url', '')
     message = get_flashed_messages(with_categories=True)
     return render_template('index.html',
-                           messages=message,
-                           url=url)
+                           messages=message)
 
 
 @app.get('/urls')
@@ -33,7 +31,7 @@ def urls_get():
 @app.post('/urls')
 def urls_post():
     messages = {
-        'danger': ('Некорректный URL', 'danger'),
+        'danger': ('danger', 'Некорректный URL'),
         'success': ('Страница успешно добавлена', 'success'),
         'info': ('Страница уже существует', 'info')
     }
@@ -41,12 +39,13 @@ def urls_post():
     url_data = request.form.to_dict()
 
     status_of_addition, id = add_url(url_data['url'])
-    if status_of_addition == 'danger':
-        flash(*messages[status_of_addition])
-        session['url'] = url_data['url']
-        return redirect(url_for('index'))
 
-    session.pop('url', None)
+    if status_of_addition == 'danger':
+        message = [messages[status_of_addition]]
+        session['url'] = url_data['url']
+        return render_template('index.html',
+                               messages=message,
+                               url=url_data['url']), 422
 
     flash(*messages[status_of_addition])
     return redirect(url_for('url_show', id=id))
