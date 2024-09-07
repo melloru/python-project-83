@@ -39,13 +39,13 @@ def get_urls():
 
 def add_url(url):
     with DataBaseManager() as repo:
-        verified_url = validate(url['name'])
+        verified_url = validate(url)
         if verified_url.get('error_name'):
             return 'danger', 0
-        found_url = repo.select_url(url_name=verified_url['netloc'])
+        found_url = repo.select_url(url_name=verified_url['name'])
         if found_url:
             return 'info', found_url['id']
-        added_url = repo.insert_url(verified_url['netloc'])
+        added_url = repo.insert_url(verified_url['name'])
         return 'success', added_url['id']
 
 
@@ -57,19 +57,18 @@ def add_url_check(id, url):
         except Exception:
             return 'danger'
 
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.content, 'html.parser')
-            h1 = soup.find('h1')
-            title = soup.find('title')
-            content = soup.find('meta', attrs={'name': 'description'})
+        soup = BeautifulSoup(response.content, 'html.parser')
+        h1 = soup.find('h1')
+        title = soup.find('title')
+        content = soup.find('meta', attrs={'name': 'description'})
 
-            result = {
-                'id': id,
-                'status_code': response.status_code,
-                'h1': h1.get_text() if h1 else None,
-                'title': title.get_text() if title else None,
-                'content': content['content']
-                if content and 'content' in content.attrs else None
+        result = {
+            'id': id,
+            'status_code': response.status_code,
+            'h1': h1.get_text() if h1 else None,
+            'title': title.get_text() if title else None,
+            'content': content['content']
+            if content and 'content' in content.attrs else None
             }
-            repo.insert_url_check(result)
-            return 'success'
+        repo.insert_url_check(result)
+        return 'success'

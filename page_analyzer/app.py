@@ -40,21 +40,21 @@ def urls_post():
 
     url_data = request.form.to_dict()
 
-    message, id = add_url(url_data)
-    if message == 'danger':
-        flash(*messages['danger'])
-        session['url'] = url_data['name']
+    status_of_addition, id = add_url(url_data['url'])
+    if status_of_addition == 'danger':
+        flash(*messages[status_of_addition])
+        session['url'] = url_data['url']
         return redirect(url_for('index'))
 
     session.pop('url', None)
 
-    flash(*messages[message])
+    flash(*messages[status_of_addition])
     return redirect(url_for('url_show', id=id))
 
 
 @app.get('/urls/<int:id>')
 def url_show(id):
-    message = get_flashed_messages(with_categories=True)
+    messages = get_flashed_messages(with_categories=True)
 
     url = get_url(id)
     if url == 404:
@@ -62,7 +62,7 @@ def url_show(id):
 
     checks = get_url_checks(id)
     return render_template('show.html',
-                           messages=message,
+                           messages=messages,
                            url=url,
                            checks=checks)
 
@@ -75,12 +75,12 @@ def url_check(id):
     }
 
     url = request.form.get('url_name')
-    check = add_url_check(id, url)
+    status_check = add_url_check(id, url)
 
-    if check == 'danger':
-        flash(*messages['danger'])
+    if status_check == 'danger':
+        flash(*messages[status_check])
         return redirect(url_for('url_show', id=id))
 
-    if check == 'success':
-        flash(*messages['success'])
+    if status_check == 'success':
+        flash(*messages[status_check])
         return redirect(url_for('url_show', id=id))

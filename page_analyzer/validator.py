@@ -15,5 +15,5 @@ def validate(url):
     if scheme not in VALID_SCHEMES or re.search(PATTERN, tld) or len(tld) < 2:
         parse_result['error_name'] = "Некорректный URL"
     else:
-        parse_result['netloc'] = f"{scheme}://{netloc}"
+        parse_result['name'] = f"{scheme}://{netloc}"
     return parse_result
