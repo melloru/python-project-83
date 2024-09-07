@@ -69,6 +69,6 @@ def add_url_check(id, url):
             'title': title.get_text() if title else None,
             'content': content['content']
             if content and 'content' in content.attrs else None
-            }
+        }
         repo.insert_url_check(result)
         return 'success'
