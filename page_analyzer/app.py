@@ -2,9 +2,8 @@ from flask import (Flask, request,
                    render_template, redirect,
                    flash, url_for, get_flashed_messages, session,
                    )
-from page_analyzer.model import (add_url, get_url,
-                                 get_url_checks, add_url_check,
-                                 get_urls)
+from page_analyzer.model import (UrlCheckService, UrlRetrievalService,
+                                 UrlManagementService, CheckRetrievalService)
 from dotenv import load_dotenv
 import os
 
@@ -13,6 +12,11 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+
+url_retrieval_service = UrlRetrievalService()
+url_management_service = UrlManagementService()
+check_retrieval_service = CheckRetrievalService()
+url_check_service = UrlCheckService()
 
 
 @app.route('/')
@@ -24,7 +28,7 @@ def index():
 
 @app.get('/urls')
 def urls_get():
-    urls = get_urls()
+    urls = url_retrieval_service.get_urls()
     return render_template('urls.html', urls=urls)
 
 
@@ -38,7 +42,7 @@ def urls_post():
 
     url_data = request.form.to_dict()
 
-    status_of_addition, id = add_url(url_data['url'])
+    status_of_addition, id = url_management_service.add_url(url_data['url'])
 
     if status_of_addition == 'danger':
         message = [messages[status_of_addition]]
@@ -55,11 +59,11 @@ def urls_post():
 def url_show(id):
     messages = get_flashed_messages(with_categories=True)
 
-    url = get_url(id)
+    url = url_retrieval_service.get_url(id)
     if url == 404:
         return render_template('page_not_found.html')
 
-    checks = get_url_checks(id)
+    checks = check_retrieval_service.get_url_checks(id)
     return render_template('show.html',
                            messages=messages,
                            url=url,
@@ -74,7 +78,7 @@ def url_check(id):
     }
 
     url = request.form.get('url_name')
-    status_check = add_url_check(id, url)
+    status_check = url_check_service.add_url_check(id, url)
 
     if status_check == 'danger':
         flash(*messages[status_check])

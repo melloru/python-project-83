@@ -10,29 +10,37 @@ load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 
-def get_db_connection(db_url):
-    try:
-        return psycopg2.connect(db_url)
-    except OperationalError:
-        print("Can't establish connection to the database")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+class DataBaseConnection:
+    def __init__(self, db_url: str):
+        self.db_url = db_url
+        self.conn = self.get_db_connection(db_url)
 
-
-class UrlRepository:
-    def __init__(self):
-        self.conn = get_db_connection(DATABASE_URL)
-
-    def commit(self):
-        self.conn.commit()
+    def get_db_connection(self, db_url):
+        try:
+            return psycopg2.connect(db_url)
+        except OperationalError:
+            print("Can't establish connection to the database")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
     def close(self):
         if self.conn:
             self.conn.close()
 
+
+class Repository:
+    def __init__(self):
+        self.connection = DataBaseConnection(DATABASE_URL)
+
+    def commit(self):
+        self.connection.conn.commit()
+
+    def close(self):
+        self.connection.close()
+
     def query_processing(self, query, get_data: Literal['one', 'all'] = None,
                          params=None):
-        with self.conn.cursor(cursor_factory=DictCursor) as curs:
+        with self.connection.conn.cursor(cursor_factory=DictCursor) as curs:
             curs.execute(query, params)
             self.commit()
             if get_data is None:
@@ -45,6 +53,8 @@ class UrlRepository:
 
             return curs.fetchone() if get_data == 'one' else curs.fetchall()
 
+
+class SelectRepository(Repository):
     def select_url(self, url_id=None, url_name=None):
         query = """
             SELECT * FROM urls
@@ -52,16 +62,6 @@ class UrlRepository:
             LIMIT 1;
             """.format('name = %(url_name)s' if url_name else 'id = %(url_id)s')
         params = {'url_name': url_name} if url_name else {'url_id': url_id}
-        return self.query_processing(query, 'one', params=params)
-
-    def insert_url(self, url):
-        query = """
-        INSERT INTO urls (name)
-        VALUES (%(url)s)
-        ON CONFLICT (name) DO NOTHING
-        RETURNING *;
-        """
-        params = {'url': url}
         return self.query_processing(query, 'one', params=params)
 
     def select_urls(self):
@@ -77,6 +77,27 @@ class UrlRepository:
 
         return self.query_processing(query, 'all')
 
+    def select_url_checks(self, url_id):
+        query = """
+        SELECT * FROM url_checks
+        WHERE url_id = %(url_id)s
+        ORDER BY id DESC;
+        """
+        params = {'url_id': url_id}
+        return self.query_processing(query, 'all', params)
+
+
+class InsertRepository(Repository):
+    def insert_url(self, url):
+        query = """
+        INSERT INTO urls (name)
+        VALUES (%(url)s)
+        ON CONFLICT (name) DO NOTHING
+        RETURNING *;
+        """
+        params = {'url': url}
+        return self.query_processing(query, 'one', params=params)
+
     def insert_url_check(self, url):
         query = """
         INSERT INTO url_checks (url_id, status_code, h1, title, description)
@@ -90,12 +111,3 @@ class UrlRepository:
             'content': url['content']
         }
         return self.query_processing(query, params=params)
-
-    def select_url_checks(self, url_id):
-        query = """
-        SELECT * FROM url_checks
-        WHERE url_id = %(url_id)s
-        ORDER BY id DESC;
-        """
-        params = {'url_id': url_id}
-        return self.query_processing(query, 'all', params)
